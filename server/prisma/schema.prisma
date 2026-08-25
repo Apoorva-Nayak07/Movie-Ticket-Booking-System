@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SeatStatus {
+  AVAILABLE
+  BOOKED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  bookings     Booking[]
+
+  @@map("users")
+}
+
+model Movie {
+  id              String   @id @default(uuid()) @db.Uuid
+  title           String
+  description     String?
+  genre           String
+  language        String
+  durationMinutes Int      @map("duration_minutes")
+  posterUrl       String?  @map("poster_url")
+  rating          Decimal? @db.Decimal(3, 1)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  shows           Show[]
+
+  @@map("movies")
+}
+
+model Show {
+  id          String   @id @default(uuid()) @db.Uuid
+  movieId     String   @map("movie_id") @db.Uuid
+  showDate    DateTime @map("show_date") @db.Date
+  startTime   DateTime @map("start_time") @db.Time
+  screenName  String   @map("screen_name")
+  totalSeats  Int      @default(20) @map("total_seats")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  movie       Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  seats       Seat[]
+  bookings    Booking[]
+
+  @@index([movieId])
+  @@index([showDate])
+  @@map("shows")
+}
+
+model Seat {
+  id          String     @id @default(uuid()) @db.Uuid
+  showId      String     @map("show_id") @db.Uuid
+  seatNumber  String     @map("seat_number")
+  status      SeatStatus @default(AVAILABLE)
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  show        Show       @relation(fields: [showId], references: [id], onDelete: Cascade)
+  bookingSeats BookingSeat[]
+
+  @@unique([showId, seatNumber])
+  @@index([showId, status])
+  @@map("seats")
+}
+
+model Booking {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  showId      String        @map("show_id") @db.Uuid
+  status      BookingStatus @default(CONFIRMED)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  cancelledAt DateTime?     @map("cancelled_at")
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  show        Show          @relation(fields: [showId], references: [id], onDelete: Restrict)
+  bookingSeats BookingSeat[]
+
+  @@index([userId])
+  @@index([showId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BookingSeat {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id") @db.Uuid
+  seatId    String   @map("seat_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  seat      Seat     @relation(fields: [seatId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingId, seatId])
+  @@index([bookingId])
+  @@index([seatId])
+  @@map("booking_seats")
+}

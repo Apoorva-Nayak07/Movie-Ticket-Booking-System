@@ -1,0 +1,62 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: cinesync-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cinesync
+      POSTGRES_PASSWORD: cinesync_dev_password
+      POSTGRES_DB: cinesync
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinesync -d cinesync"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: mongo:8
+    container_name: cinesync-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: cinesync
+      MONGO_INITDB_ROOT_PASSWORD: cinesync_mongo_password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--eval",
+          "db.adminCommand('ping')"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: cinesync-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
