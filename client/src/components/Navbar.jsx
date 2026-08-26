@@ -1,68 +1,84 @@
-import { NavLink, Link, useNavigate, Outlet } from "react-router-dom";
-import {
-  Film,
-  Home,
-  LogOut,
-  Ticket,
-  User,
-} from "lucide-react";
+import { Film, LogOut, User } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  function handleLogout() {
+  const handleLogout = () => {
     logout();
     navigate("/login");
-  }
+  };
 
-    return (
-    <>
-    <header className="navbar">
-      <div className="navbar-container">
-        <Link to="/movies" className="navbar-brand">
-          <span className="navbar-logo">
-            <Film size={22} />
+  return (
+    <div className="app-shell">
+      <header className="navbar">
+        <NavLink to="/movies" className="navbar-brand">
+          <span className="brand-icon">
+            <Film size={21} />
           </span>
 
-          <span>CineSync</span>
-        </Link>
+          <span>
+            Cine<span className="brand-accent">Sync</span>
+          </span>
+        </NavLink>
 
-        <nav className="navbar-links">
-          <NavLink to="/movies">
-            <Home size={18} />
+        <nav className="nav-links">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? "active" : ""}`
+            }
+          >
+            Home
+          </NavLink>
+
+          <NavLink
+            to="/movies"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? "active" : ""}`
+            }
+          >
             Movies
           </NavLink>
 
-          <NavLink to="/shows">
-            <Ticket size={18} />
+          <NavLink
+            to="/shows"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? "active" : ""}`
+            }
+          >
             Shows
           </NavLink>
 
-          <NavLink to="/my-bookings">
-            <Ticket size={18} />
+          <NavLink
+            to="/my-bookings"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? "active" : ""}`
+            }
+          >
             My Bookings
           </NavLink>
         </nav>
 
-        <div className="navbar-user">
-          <div className="user-info">
-            <User size={18} />
-            <span>{user?.name || "User"}</span>
-          </div>
+        <div className="nav-user">
+          <span className="user-name">
+            <User size={15} style={{ verticalAlign: "middle" }} />{" "}
+            {user?.name || "User"}
+          </span>
 
           <button
-            className="logout-button"
+            className="logout-btn"
             onClick={handleLogout}
-            title="Logout"
           >
-            <LogOut size={18} />
+            <LogOut size={15} />
+            Logout
           </button>
         </div>
-      </div>
       </header>
+
       <Outlet />
-    </>
+    </div>
   );
 }

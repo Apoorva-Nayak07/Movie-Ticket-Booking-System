@@ -1,79 +1,40 @@
+import { createContext, useContext, useEffect, useState } from "react";
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-
-import api from "../services/api";
-import {
+  setAuth,
   getToken,
   getUser,
-  setToken,
-  setUser,
   clearAuth,
 } from "../utils/storage";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setTokenState] = useState(getToken());
-  const [user, setUserState] = useState(getUser());
+  const [user, setUser] = useState(getUser);
+  const [token, setToken] = useState(getToken);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(false);
   }, []);
 
-  async function login(email, password) {
-    const response = await api.post("/auth/login", {
-      email,
-      password,
-    });
+  const login = (token, user) => {
+    setAuth(token, user);
+    setToken(token);
+    setUser(user);
+  };
 
-    const responseData = response.data?.data;
-
-    const newToken = responseData?.token;
-    const newUser = responseData?.user;
-
-    if (!newToken) {
-      throw new Error("Login token was not returned by the server");
-    }
-
-    setToken(newToken);
-    setTokenState(newToken);
-
-    if (newUser) {
-      setUser(newUser);
-      setUserState(newUser);
-    }
-
-    return response.data;
-  }
-
-  async function register(name, email, password) {
-    const response = await api.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
-
-    return response.data;
-  }
-
-  function logout() {
+  const logout = () => {
     clearAuth();
-    setTokenState(null);
-    setUserState(null);
-  }
+    setToken(null);
+    setUser(null);
+  };
 
   const value = {
-    token,
     user,
+    token,
     loading,
-    isAuthenticated: Boolean(token),
+    isAuthenticated: !!token,
     login,
-    register,
     logout,
   };
 
@@ -93,3 +54,5 @@ export function useAuth() {
 
   return context;
 }
+
+export default AuthContext;

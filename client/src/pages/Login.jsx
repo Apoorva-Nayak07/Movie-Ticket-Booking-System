@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Film, Lock, Mail } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Film, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-export default function Login() {
-  const navigate = useNavigate();
+function Login() {
   const { login } = useAuth();
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState({
     email: "",
@@ -13,8 +15,10 @@ export default function Login() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const from = location.state?.from?.pathname || "/";
 
   function handleChange(event) {
     setForm({
@@ -38,11 +42,13 @@ export default function Login() {
 
       await login(form.email, form.password);
 
-      navigate("/movies");
-    } catch (err) {
+      navigate(from, { replace: true });
+    } catch (error) {
+      console.error("Login failed:", error);
+
       setError(
-        err.response?.data?.message ||
-          "Unable to login. Please check your credentials."
+        error.response?.data?.message ||
+          "Login failed. Please check your credentials."
       );
     } finally {
       setLoading(false);
@@ -52,25 +58,29 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-brand">
-          <div className="brand-icon">
-            <Film size={28} />
+
+        <div className="auth-logo">
+          <Film size={32} />
+        </div>
+
+        <h1>Welcome Back</h1>
+
+        <p className="auth-subtitle">
+          Sign in to continue to CineSync
+        </p>
+
+        {error && (
+          <div className="auth-error">
+            {error}
           </div>
-
-          <h1>CineSync</h1>
-          <p>Book your movie experience</p>
-        </div>
-
-        <div className="auth-header">
-          <h2>Welcome back</h2>
-          <p>Sign in to continue to CineSync</p>
-        </div>
-
-        {error && <div className="auth-error">{error}</div>}
+        )}
 
         <form onSubmit={handleSubmit}>
+
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              Email
+            </label>
 
             <div className="input-wrapper">
               <Mail size={18} />
@@ -88,7 +98,9 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <div className="input-wrapper">
               <Lock size={18} />
@@ -106,9 +118,8 @@ export default function Login() {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={
-                  showPassword ? "Hide password" : "Show password"
+                onClick={() =>
+                  setShowPassword(!showPassword)
                 }
               >
                 {showPassword ? (
@@ -121,19 +132,28 @@ export default function Login() {
           </div>
 
           <button
-            type="submit"
-            className="auth-submit"
-            disabled={loading}
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
+  type="submit"
+  className="auth-submit premium-submit"
+  disabled={loading}
+>
+  <span>
+    {loading ? "Signing in..." : "Sign In"}
+  </span>
+
+  {!loading && <span className="submit-arrow">→</span>}
+</button>
         </form>
 
         <p className="auth-footer">
           Don't have an account?{" "}
-          <Link to="/register">Create an account</Link>
+          <Link to="/register">
+            Create an account
+          </Link>
         </p>
+
       </div>
     </div>
   );
 }
+
+export default Login;

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Film, Lock, Mail, User } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Film } from "lucide-react";
+import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, login } = useAuth();
+  const { login } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -14,146 +15,152 @@ export default function Register() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleChange(event) {
+  const handleChange = (e) => {
     setForm({
       ...form,
-      [event.target.name]: event.target.value,
+      [e.target.name]: e.target.value,
     });
-  }
+  };
 
-  async function handleSubmit(event) {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     setError("");
 
-    if (!form.name || !form.email || !form.password) {
-      setError("Please fill in all fields.");
+    if (!form.name.trim()) {
+      setError("Please enter your full name.");
       return;
     }
 
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (!form.email.trim()) {
+      setError("Please enter your email.");
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
 
     try {
       setLoading(true);
 
-      await register(
-        form.name,
-        form.email,
-        form.password
-      );
+      const response = await api.post("/auth/register", {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+      });
 
-      // Login immediately after successful registration
-      await login(form.email, form.password);
+      console.log("REGISTER RESPONSE:", response.data);
+
+      const { token, user } = response.data.data;
+
+      login(token, user);
 
       navigate("/movies");
     } catch (err) {
+      console.error("REGISTRATION ERROR:", err);
+
+      console.error("STATUS:", err.response?.status);
+      console.error("DATA:", err.response?.data);
+
       setError(
         err.response?.data?.message ||
-          "Unable to create your account."
+          "Registration failed. Please try again."
       );
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-brand">
-          <div className="brand-icon">
-            <Film size={28} />
+        <div className="auth-logo">
+          <Film size={32} />
+        </div>
+
+        <h1>Create Account</h1>
+
+        <p className="auth-subtitle">
+          Join CineSync and book your next movie
+        </p>
+
+        {error && (
+          <div className="error-message">
+            {error}
           </div>
-
-          <h1>CineSync</h1>
-          <p>Your movie. Your seats. Your experience.</p>
-        </div>
-
-        <div className="auth-header">
-          <h2>Create your account</h2>
-          <p>Join CineSync and start booking movies</p>
-        </div>
-
-        {error && <div className="auth-error">{error}</div>}
+        )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Full Name</label>
+          <label>Full Name</label>
 
-            <div className="input-wrapper">
-              <User size={18} />
-
-              <input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Enter your name"
-                value={form.name}
-                onChange={handleChange}
-                autoComplete="name"
-              />
-            </div>
+          <div className="input-wrapper">
+            <User size={20} />
+            <input
+              type="text"
+              name="name"
+              placeholder="Enter your full name"
+              value={form.name}
+              onChange={handleChange}
+              autoComplete="name"
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <label>Email</label>
 
-            <div className="input-wrapper">
-              <Mail size={18} />
-
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter your email"
-                value={form.email}
-                onChange={handleChange}
-                autoComplete="email"
-              />
-            </div>
+          <div className="input-wrapper">
+            <Mail size={20} />
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={form.email}
+              onChange={handleChange}
+              autoComplete="email"
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <label>Password</label>
 
-            <div className="input-wrapper">
-              <Lock size={18} />
+          <div className="input-wrapper">
+            <Lock size={20} />
 
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="new-password"
-              />
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Minimum 8 characters"
+              value={form.password}
+              onChange={handleChange}
+              autoComplete="new-password"
+            />
 
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() =>
+                setShowPassword(!showPassword)
+              }
+            >
+              {showPassword ? (
+                <EyeOff size={20} />
+              ) : (
+                <Eye size={20} />
+              )}
+            </button>
           </div>
 
           <button
             type="submit"
-            className="auth-submit"
+            className="btn btn-primary auth-submit"
             disabled={loading}
           >
-            {loading ? "Creating account..." : "Create Account"}
+            {loading
+              ? "Creating Account..."
+              : "Create Account"}
           </button>
         </form>
 

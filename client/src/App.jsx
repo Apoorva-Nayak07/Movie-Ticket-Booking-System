@@ -18,21 +18,16 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Navbar />}>
               <Route path="/" element={<Home />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/shows" element={<Shows />} />
               <Route path="/booking/:showId" element={<Booking />} />
-              <Route
-                path="/my-bookings"
-                element={<MyBookings />}
-              />
+              <Route path="/my-bookings" element={<MyBookings />} />
             </Route>
           </Route>
 
